@@ -1,7 +1,7 @@
 // DotVault: a small command-line tool that backs up Linux dotfiles to a Git repository.
 #include <cstdlib>
 #include <filesystem>
-#include <iostream>
+#include <print>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -15,7 +15,7 @@ static int backupTarget(const fs::path& configRoot, const fs::path& backupRoot, 
     fs::path backupPath = backupRoot / target;
 
     if (!fs::exists(configPath)) {
-        std::cout << "Skipped (not found): " << configPath << '\n';
+        std::println("Skipped (not found): {}", configPath.string());
         return 0;
     }
 
@@ -23,7 +23,7 @@ static int backupTarget(const fs::path& configRoot, const fs::path& backupRoot, 
     std::error_code ec;
     fs::create_directories(backupPath, ec);
     if (ec) {
-        std::cerr << "Cannot create " << backupPath << ": " << ec.message() << '\n';
+        std::println(stderr, "Cannot create {}: {}", backupPath.string(), ec.message());
         return 1;
     }
 
@@ -33,14 +33,14 @@ static int backupTarget(const fs::path& configRoot, const fs::path& backupRoot, 
         fs::copy(entry.path(), destination,
                  fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
         if (ec) {
-            std::cerr << "Failed: " << entry.path() << ": " << ec.message() << '\n';
+            std::println(stderr, "Failed: {}: {}", entry.path().string(), ec.message());
             failures++;
         } else {
-            std::cout << "Backed up: " << entry.path() << " -> " << destination << '\n';
+            std::println("Backed up: {} -> {}", entry.path().string(), destination.string());
         }
     }
     if (ec) {
-        std::cerr << "Cannot read " << configPath << ": " << ec.message() << '\n';
+        std::println(stderr, "Cannot read {}: {}", configPath.string(), ec.message());
         failures++;
     }
     return failures;
@@ -54,7 +54,7 @@ static bool commitAndPush(const fs::path& backupRoot) {
 
     // "git diff --cached --quiet" returns 0 when there is nothing new to commit
     if (std::system((repo + "diff --cached --quiet").c_str()) == 0) {
-        std::cout << "No changes, nothing to commit.\n";
+        std::println("No changes, nothing to commit.");
         return true;
     }
     return std::system((repo + "commit -q -m 'DotVault: automatic backup' && " + repo + "push -q").c_str()) == 0;
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     // Never build paths from a missing $HOME: that would back up to the wrong place
     const char* home = std::getenv("HOME");
     if (home == nullptr || *home == '\0') {
-        std::cerr << "Error: $HOME is not set\n";
+        std::println(stderr, "Error: $HOME is not set");
         return 1;
     }
 
@@ -86,21 +86,21 @@ int main(int argc, char* argv[]) {
     const fs::path configRoot = fs::path(home) / ".config";
     const fs::path backupRoot = fs::path(home) / "Dotfiles";
 
-    std::cout << "DotVault: backing up to " << backupRoot << '\n';
+    std::println("DotVault: backing up to {}", backupRoot.string());
     int failures = 0;
     for (const std::string& target : targets) {
         failures += backupTarget(configRoot, backupRoot, target);
     }
 
     if (useGit && !commitAndPush(backupRoot)) {
-        std::cerr << "Git commit/push failed\n";
+        std::println(stderr, "Git commit/push failed");
         return 2;
     }
 
     if (failures > 0) {
-        std::cerr << failures << " item(s) failed to back up\n";
+        std::println(stderr, "{} item(s) failed to back up", failures);
         return 3;
     }
-    std::cout << "Done.\n";
+    std::println("Done.");
     return 0;
 }

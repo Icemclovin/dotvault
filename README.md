@@ -1,8 +1,8 @@
 # DotVault
 
-A small C++17 command-line tool that backs up my Linux config files (dotfiles) from `~/.config` to `~/Dotfiles` and pushes them to GitHub.
+A small C++26 command-line tool that backs up my Linux config files (dotfiles) from `~/.config` to `~/Dotfiles` and pushes them to GitHub.
 
-I built it to stop losing my Hyprland setup when reinstalling Arch Linux, and to practise modern C++ with `std::filesystem`.
+I built it to stop losing my Hyprland setup when reinstalling Arch Linux, and to practise modern C++ with `std::filesystem` and `std::println`.
 
 ## What it does
 
@@ -12,7 +12,7 @@ I built it to stop losing my Hyprland setup when reinstalling Arch Linux, and to
 
 ## Build
 
-Needs a C++17 compiler (GCC 8+ or Clang 7+) and CMake 3.16+.
+Needs a compiler with C++26 support (GCC 14+ or Clang 19+) and CMake 3.25+.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
