@@ -1,4 +1,38 @@
-DotVault 🔒A lightweight, high-performance CLI utility written in C++20 designed to automatically scan, back up, and synchronize Linux dotfiles directly to a secure cloud repository.  🚀 FeaturesAutomated Directory Scanning: Dynamically discovers and indexes targeted configuration directories inside ~/.config/.  Cross-Platform Portability: Resolves user home directories dynamically via environment variables ($HOME), eliminating hardcoded paths.  Smart Mirroring: Copies subdirectories recursively and selectively overwrites existing records using efficient std::filesystem rules.  Git & GitHub Pipeline Automation: Automatically aggregates changes, generates a system commit timestamp, and pushes assets to remote repositories natively without shell context degradation.  📁 Monitored ConfigurationsBy default, DotVault monitors and mirrors the following mission-critical configurations:  Hyprland (~/.config/hypr) - Core window manager rules, inputs, and keybinds.  Kitty (~/.config/kitty) - GPU-accelerated terminal configurations and themes.  Waybar (~/.config/waybar) - System status bars, workspace indicators, and tracking shell scripts.  🛠️ Compilation & InstallationEnsure you have a modern C++ compiler supporting the C++20 standard (e.g., GCC 10+ or Clang 11+).  1. Clone the SourceBashgit clone https://github.com/Icemclovin/dotvault.git
-cd dotvault
-2. Compile from SourceBashg++ -std=c++20 main.cpp -o dotvault
-3. Run a System BackupBash./dotvault
+# DotVault
+
+A small C++17 command-line tool that backs up my Linux config files (dotfiles) from `~/.config` to `~/Dotfiles` and pushes them to GitHub.
+
+I built it to stop losing my Hyprland setup when reinstalling Arch Linux, and to practise modern C++ with `std::filesystem`.
+
+## What it does
+
+1. Copies the chosen folders from `~/.config/<name>` to `~/Dotfiles/<name>` (recursively, overwriting older copies).
+2. Skips folders that do not exist, and keeps going when a single file fails to copy.
+3. Runs `git add`, and only makes a commit and pushes when something actually changed.
+
+## Build
+
+Needs a C++17 compiler (GCC 8+ or Clang 7+) and CMake 3.16+.
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+## Use
+
+`~/Dotfiles` must already be a Git repository with a remote.
+
+```sh
+./build/dotvault                  # backs up hypr, kitty and waybar, then commits and pushes
+./build/dotvault nvim fish        # backs up other folders instead
+./build/dotvault --no-git kitty   # only copies, no commit or push
+```
+
+Exit codes: `0` success, `1` `$HOME` not set, `2` git failed, `3` one or more files failed to copy.
+
+## Limitations
+
+- Files deleted from `~/.config` are not deleted from the backup.
+- Git is called through `std::system`, so `git` must be on your `PATH`.
+- Linux/macOS only (uses `$HOME`).
